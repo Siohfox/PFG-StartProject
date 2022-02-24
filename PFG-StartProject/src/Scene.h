@@ -68,8 +68,6 @@ private:
 	*/
 	bool _simulation_start;
 
-	glm::vec3 initialVelocity;
-
 };
 
 #endif // !_SCENE_H_

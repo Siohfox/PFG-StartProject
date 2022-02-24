@@ -23,7 +23,7 @@ Scene::Scene()
 	_level = new GameObject();
 
 	// Create the material for the game object- level
-	Material *modelMaterial = new Material();
+	Material* modelMaterial = new Material();
 	// Shaders are now in files
 	modelMaterial->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
 	// You can set some simple material properties, these values are passed to the shader
@@ -41,7 +41,7 @@ Scene::Scene()
 	_level->SetMaterial(modelMaterial);
 
 	// The mesh is the geometry for the object
-	Mesh *groundMesh = new Mesh();
+	Mesh* groundMesh = new Mesh();
 	// Load from OBJ file. This must have triangulated geometry
 	groundMesh->LoadOBJ("assets/models/woodfloor.obj");
 	// Tell the game object to use this mesh
@@ -51,7 +51,7 @@ Scene::Scene()
 
 
 	// Create the material for the game object- level
-	Material *objectMaterial = new Material();
+	Material* objectMaterial = new Material();
 	Material* objectMaterial2 = new Material();
 	// Shaders are now in files
 	objectMaterial->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
@@ -75,17 +75,19 @@ Scene::Scene()
 	_physics_object2->SetMaterial(objectMaterial2);
 
 	// Set the geometry for the object
-	Mesh *modelMesh = new Mesh();
+	Mesh* modelMesh = new Mesh();
 	// Load from OBJ file. This must have triangulated geometry
 	modelMesh->LoadOBJ("assets/models/sphere.obj");
 	// Tell the game object to use this mesh
 	_physics_object->SetMesh(modelMesh);
-	_physics_object->SetPosition(0.0f, 100.0f, 0.0f);
+	_physics_object->SetPosition(0.0f, 20.0f, 0.0f);
 	_physics_object->SetScale(0.3f, 0.3f, 0.3f);
+	_physics_object->SetInitialVelocity({0.0f, 0.0f, 0.0f});
 
 	_physics_object2->SetMesh(modelMesh);
 	_physics_object2->SetPosition(1.0f, 6.0f, 0.0f);
 	_physics_object2->SetScale(0.3f, 0.3f, 0.3f);
+	_physics_object2->SetInitialVelocity({ 0.0f, 1.0f, 0.0f });
 
 	
 }
@@ -99,12 +101,13 @@ Scene::~Scene()
 	delete _camera;
 }
 
-float timeStep = 0;
+glm::vec3 gravity = {0.0f, -9.8f, 0.0f};
 
 void Scene::Update(float deltaTs, Input* input)
 {
 
 	
+
 	// Update the game object (this is currently hard-coded motion)
 	if (input->cmd_x)
 	{
@@ -116,9 +119,22 @@ void Scene::Update(float deltaTs, Input* input)
 		glm::vec3 pos = _physics_object->GetPosition();
 		glm::vec3 pos2 = _physics_object2->GetPosition();
 
+		glm::vec3 i_velocity = _physics_object->GetInitialVelocity();
+		glm::vec3 vel_temp;
 
-		pos.y = (-9.8 * (deltaTs*deltaTs)) / 2;
-		pos2.y = (-9.8 * (deltaTs * deltaTs)) / 2;
+		vel_temp.y =   -9.8 * deltaTs;
+
+		pos.x += vel_temp.x * deltaTs;
+		pos.y += vel_temp.y * deltaTs;
+		pos.z += vel_temp.z * deltaTs;
+
+		i_velocity += vel_temp;
+
+		_physics_object->SetInitialVelocity(i_velocity);
+
+		auto vel = _physics_object->GetInitialVelocity();
+
+		std::cout << std::sqrt((vel.x * vel.x) * (vel.y * vel.y) * (vel.z * vel.z)) << "\n";
 
 		// Collision detection 
 		if (pos.y <= _level->GetPosition().y + 0.3f)

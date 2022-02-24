@@ -165,6 +165,7 @@
     <ClInclude Include="src\GameObject.h" />
     <ClInclude Include="src\glew.h" />
     <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\KinematicsObject.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Scene.h" />

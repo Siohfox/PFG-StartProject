@@ -51,7 +51,11 @@ public:
 	* @param float sZ z scale
 	*/
 	void SetScale(float sX, float sY, float sZ) { _scale.x = sX; _scale.y = sY; _scale.z = sZ; }
-	
+
+	void SetInitialVelocity(glm::vec3 val) { initial_Velocity = val; }
+
+	glm::vec3 GetInitialVelocity() { return initial_Velocity; }
+
 	/** Function for getting position of the game object
 	* @return The result
 	*/
@@ -98,6 +102,8 @@ protected:
 	* The model matrix must be built from the scale of the model geometry
 	*/
 	glm::vec3 _scale;
+
+	glm::vec3 initial_Velocity;
 
 };
 

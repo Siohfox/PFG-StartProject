@@ -30,7 +30,7 @@ public:
 	*   next procedure.
 	*   @param float deltaTs simulation time step length
 	*/
-	virtual void Update(float deltaTs);
+	void Update(float deltaTs) override;
 
 	/** Set position for the object
 	* @param glm::vec3 pos a 3D vector for the position of the object

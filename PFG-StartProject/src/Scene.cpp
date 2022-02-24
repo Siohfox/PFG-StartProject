@@ -17,8 +17,8 @@ Scene::Scene()
 	_lightPosition = glm::vec3(10, 10, 0);
 
 	// Create a game object
-	_physics_object = new GameObject();
-	_physics_object2 = new GameObject();
+	_physics_object = new KinematicsObject();
+	glm::vec3 _v_i = glm::vec3(10.0f, 10.5f, 0.0f);
 	// Create a game level object
 	_level = new GameObject();
 
@@ -59,20 +59,16 @@ Scene::Scene()
 	// You can set some simple material properties, these values are passed to the shader
 	// This colour modulates the texture colour
 	objectMaterial->SetDiffuseColour(glm::vec3(0.8, 0.1, 0.1));
-	objectMaterial2->SetDiffuseColour(glm::vec3(0.1, 0.8, 0.1));
 	// The material currently supports one texture
 	// This is multiplied by all the light components (ambient, diffuse, specular)
 	// Note that the diffuse colour set with the line above will be multiplied by the texture colour
 	// If you want just the texture colour, use modelMaterial->SetDiffuseColour( glm::vec3(1,1,1) );
 	objectMaterial->SetTexture("assets/textures/default.bmp");
-	objectMaterial2->SetTexture("assets/textures/default.bmp");
 	// Need to tell the material the light's position
 	// If you change the light's position you need to call this again
 	objectMaterial->SetLightPosition(_lightPosition);
-	objectMaterial2->SetLightPosition(_lightPosition);
 	// Tell the level object to use this material
 	_physics_object->SetMaterial(objectMaterial);
-	_physics_object2->SetMaterial(objectMaterial2);
 
 	// Set the geometry for the object
 	Mesh* modelMesh = new Mesh();
@@ -80,33 +76,22 @@ Scene::Scene()
 	modelMesh->LoadOBJ("assets/models/sphere.obj");
 	// Tell the game object to use this mesh
 	_physics_object->SetMesh(modelMesh);
-	_physics_object->SetPosition(0.0f, 20.0f, 0.0f);
-	_physics_object->SetScale(0.3f, 0.3f, 0.3f);
-	_physics_object->SetInitialVelocity({0.0f, 0.0f, 0.0f});
+	_physics_object->SetPosition({ 0.0f, 20.0f, 0.0f });
+	_physics_object->SetScale(glm::vec3(0.3f, 0.3f, 0.3f));
 
-	_physics_object2->SetMesh(modelMesh);
-	_physics_object2->SetPosition(1.0f, 6.0f, 0.0f);
-	_physics_object2->SetScale(0.3f, 0.3f, 0.3f);
-	_physics_object2->SetInitialVelocity({ 0.0f, 1.0f, 0.0f });
-
-	
 }
 
 Scene::~Scene()
 {
 	// You should neatly clean everything up here
 	delete _physics_object;
-	delete _physics_object2;
 	delete _level;
 	delete _camera;
 }
 
-glm::vec3 gravity = {0.0f, -9.8f, 0.0f};
-
 void Scene::Update(float deltaTs, Input* input)
 {
 
-	
 
 	// Update the game object (this is currently hard-coded motion)
 	if (input->cmd_x)
@@ -116,42 +101,36 @@ void Scene::Update(float deltaTs, Input* input)
 	if (_simulation_start == true)
 	{
 
-		glm::vec3 pos = _physics_object->GetPosition();
-		glm::vec3 pos2 = _physics_object2->GetPosition();
+		//glm::vec3 pos = _physics_object->GetPosition();
 
-		glm::vec3 i_velocity = _physics_object->GetInitialVelocity();
-		glm::vec3 vel_temp;
+		//glm::vec3 i_velocity = _physics_object->GetInitialVelocity();
+		//glm::vec3 vel_temp;
 
-		vel_temp.y =   -9.8 * deltaTs;
+		//vel_temp.y =   -9.8 * deltaTs;
 
-		pos.x += vel_temp.x * deltaTs;
-		pos.y += vel_temp.y * deltaTs;
-		pos.z += vel_temp.z * deltaTs;
+		//pos.x += vel_temp.x * deltaTs;
+		//pos.y += vel_temp.y * deltaTs;
+		//pos.z += vel_temp.z * deltaTs;
 
-		i_velocity += vel_temp;
+		//i_velocity += vel_temp;
 
-		_physics_object->SetInitialVelocity(i_velocity);
+		//_physics_object->SetInitialVelocity(i_velocity);
 
-		auto vel = _physics_object->GetInitialVelocity();
+		//auto vel = _physics_object->GetInitialVelocity();
 
-		std::cout << std::sqrt((vel.x * vel.x) * (vel.y * vel.y) * (vel.z * vel.z)) << "\n";
+		//std::cout << std::sqrt((vel.x * vel.x) * (vel.y * vel.y) * (vel.z * vel.z)) << "\n";
 
-		// Collision detection 
-		if (pos.y <= _level->GetPosition().y + 0.3f)
-		{
-			pos = glm::vec3(pos.x, _level->GetPosition().y + 0.3f, pos.z);
-		}
+		//// Collision detection 
+		//if (pos.y <= _level->GetPosition().y + 0.3f)
+		//{
+		//	pos = glm::vec3(pos.x, _level->GetPosition().y + 0.3f, pos.z);
+		//}
 
-		if (pos2.y <= _level->GetPosition().y + 0.3f)
-		{
-			pos2 = glm::vec3(pos2.x, _level->GetPosition().y + 0.3f, pos2.z);
-		}
+		//_physics_object->SetPosition(pos);;
 
-		_physics_object->SetPosition(pos);
-		_physics_object2->SetPosition(pos2);
+		_physics_object->StartSimulation(_simulation_start);
 	}
 	_physics_object->Update(deltaTs);
-	_physics_object2->Update(deltaTs);
 	_level->Update(deltaTs);
 	_camera->Update(input);
 
@@ -164,7 +143,6 @@ void Scene::Draw()
 {
 	// Draw objects, giving the camera's position and projection
 	_physics_object->Draw(_viewMatrix, _projMatrix);
-	_physics_object2->Draw(_viewMatrix, _projMatrix);
 	_level->Draw(_viewMatrix, _projMatrix);
 
 }

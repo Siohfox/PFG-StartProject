@@ -60,6 +60,15 @@ void Camera::Update(Input* input)
 	glm::vec3 right = glm::vec3(sin(_cameraAngleX - 3.14f / 2.0f), 0, cos(_cameraAngleX - 3.14f / 2.0f));
 	glm::vec3 up = glm::cross(right, direction);
 
+	if (input->cmd_shift)
+	{
+		speed = 0.4f;
+	}
+	else
+	{
+		speed = 0.1f;
+	}
+
 	// Move camera in a direction
 	if (input->cmd_w)
 	{

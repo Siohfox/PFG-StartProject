@@ -6,7 +6,7 @@
 */
 Input::Input()
 {
-	Quit = cmd_s = cmd_a = cmd_w = cmd_d = keyDown = cmd_mouseleft = cmd_mouseleftUp = cmd_mouseright = cmd_mouserightUp = once = cmd_z = cmd_x = cmd_c = false;
+	Quit = cmd_s = cmd_a = cmd_w = cmd_d = keyDown = cmd_mouseleft = cmd_mouseleftUp = cmd_mouseright = cmd_mouserightUp = once = cmd_z = cmd_x = cmd_c = cmd_shift = false;
 }
 
 std::vector<int> Input::keys;
@@ -91,7 +91,11 @@ void Input::update()
 			{
 				Quit = true;
 			}
-
+			else if (eventQueue.key.keysym.sym == SDLK_LSHIFT)
+			{
+				cmd_shift = true;
+				std::cout << "Shift button pressed  ! \n";
+			}
 
 		}
 		else if (eventQueue.type == SDL_KEYUP)
@@ -110,6 +114,11 @@ void Input::update()
 				//mouseDelta.x = 0;
 				cmd_a = false;
 				cmd_d = false;
+			}
+			else if (eventQueue.key.keysym.sym == SDLK_LSHIFT)
+			{
+				//mouseDelta.x = 0;
+				cmd_shift = false;
 			}
 		}
 

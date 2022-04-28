@@ -43,6 +43,11 @@ public:
 	*/
 	void Draw();
 
+	/** Create object
+	*
+	*/
+	DynamicObject* CreateSphere(Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad);
+
 private:
 
 	/** A physics object
@@ -72,6 +77,7 @@ private:
 	*/
 	bool _simulation_start;
 
+	std::vector<DynamicObject*> _sceneObjects;
 };
 
 #endif // !_SCENE_H_

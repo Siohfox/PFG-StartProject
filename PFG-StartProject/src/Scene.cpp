@@ -16,9 +16,6 @@ Scene::Scene()
 	// Position of the light, in world-space
 	_lightPosition = glm::vec3(10, 10, 0);
 
-	// Create a game object
-	_physics_object = new DynamicObject();
-	_physics_object2 = new DynamicObject();
 	glm::vec3 _v_i = glm::vec3(10.0f, 10.5f, 0.0f);
 	// Create a game level object
 	_level = new GameObject();
@@ -53,10 +50,8 @@ Scene::Scene()
 
 	// Create the material for the game object- level
 	Material* objectMaterial = new Material();
-	Material* objectMaterial2 = new Material();
 	// Shaders are now in files
 	objectMaterial->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
-	objectMaterial2->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
 	// You can set some simple material properties, these values are passed to the shader
 	// This colour modulates the texture colour
 	objectMaterial->SetDiffuseColour(glm::vec3(0.8, 0.1, 0.1));
@@ -77,17 +72,13 @@ Scene::Scene()
 	// Load from OBJ file. This must have triangulated geometry
 	modelMesh->LoadOBJ("assets/models/sphere.obj");
 	// Tell the game object to use this mesh
-	_physics_object->SetMesh(modelMesh);
-	_physics_object->SetPosition({ 0.0f, 20.0f, 0.0f });
-	_physics_object->SetScale(glm::vec3(0.3f, 0.3f, 0.3f));
-	_physics_object->SetMass(2.0f);
-	_physics_object->SetBoundingRadius(0.3f);
 
-	_physics_object2->SetMesh(modelMesh);
-	_physics_object2->SetPosition({ 2.0f, 20.0f, 0.0f });
-	_physics_object2->SetScale(glm::vec3(0.5f, 0.5f, 0.5f));
-	_physics_object2->SetMass(4.0f);
-	_physics_object2->SetBoundingRadius(0.5f);
+	for (int i = 0; i < 3; i++)
+	{
+		DynamicObject* newObj = CreateSphere(objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
+
+		_sceneObjects.push_back(newObj);
+	}
 }
 
 Scene::~Scene()
@@ -110,11 +101,17 @@ void Scene::Update(float deltaTs, Input* input)
 	}
 	if (_simulation_start == true)
 	{
-		_physics_object->StartSimulation(_simulation_start);
-		_physics_object2->StartSimulation(_simulation_start);
+		for (int i = 0; i < _sceneObjects.size(); i++)
+		{
+			_sceneObjects.at(i)->StartSimulation(_simulation_start);
+		}
 	}
-	_physics_object->Update(deltaTs);
-	_physics_object2->Update(deltaTs);
+
+	for (int i = 0; i < _sceneObjects.size(); i++)
+	{
+		_sceneObjects.at(i)->Update(deltaTs);
+	}
+
 	_level->Update(deltaTs);
 	_camera->Update(input);
 
@@ -126,10 +123,26 @@ void Scene::Update(float deltaTs, Input* input)
 void Scene::Draw()
 {
 	// Draw objects, giving the camera's position and projection
-	_physics_object->Draw(_viewMatrix, _projMatrix);
-	_physics_object2->Draw(_viewMatrix, _projMatrix);
+
+	for (int i = 0; i < _sceneObjects.size(); i++)
+	{
+		_sceneObjects.at(i)->Draw(_viewMatrix, _projMatrix);
+	}
+
 	_level->Draw(_viewMatrix, _projMatrix);
 
 }
 
 
+DynamicObject* Scene::CreateSphere(Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad)
+{
+	DynamicObject* object = new DynamicObject();
+	object->SetMaterial(material);
+	object->SetMesh(modelMesh);
+	object->SetPosition(position);
+	object->SetScale(scale);
+	object->SetMass(mass);
+	object->SetBoundingRadius(boundingRad);
+
+	return object;
+}

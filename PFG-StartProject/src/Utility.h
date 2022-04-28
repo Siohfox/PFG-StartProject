@@ -15,7 +15,7 @@ namespace PFG
 	at time step t0 and predict its movement using 'v'. Then find the position of the centre of the sphere using
 	the parameter 't'. This also returns new centre point
 	*/
-	bool MovingSphereToPlaneCollision(const glm::vec3& n, const glm::vec3& c0, const glm::vec3& c1, const glm::vec3& q, float r, glm::vec3& ci);
+	bool MovingSphereToPlaneCollision(const glm::i vec3& n, const glm::vec3& c0, const glm::vec3& c1, const glm::vec3& q, float r, glm::vec3& ci);
 
 
 	/*

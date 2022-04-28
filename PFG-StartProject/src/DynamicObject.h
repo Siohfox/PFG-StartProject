@@ -44,6 +44,10 @@ public:
 	*/
 	 void Euler(float deltaTs);
 
+	 void Midpoint(float deltaTs);
+
+	 void Verlet(float deltaTs);
+
 	/** Set force for the object
 	* @param glm::vec3 force a 3D vector for the force acting on the object
 	*/

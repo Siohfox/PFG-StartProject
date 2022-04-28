@@ -71,6 +71,37 @@ void DynamicObject::Euler(float deltaTs)
 
 }
 
+void DynamicObject::Midpoint(float deltaTs)
+{
+	glm::vec3 force;
+	glm::vec3 accel;
+	glm::vec3 k0;
+	glm::vec3 k1;
+
+	// Evaluate once at t0
+	force = _force;
+	accel = force / _mass;
+	k0 = deltaTs * accel;
+
+	// Evaluate once at t0 + deltaT/2 using half of k0
+	force = _force + k0 / 2.0f;
+	accel = force / _mass;
+	k1 = deltaTs * accel;
+
+	// Eva;uate once at t0 + deltaT using k1
+	_velocity += k1;
+	_position += _velocity * deltaTs;
+}
+
+
+void DynamicObject::Verlet(float deltaTs)
+{
+
+
+	_position + deltaTs += -_position * deltaTs - deltaTs + 2 * _position * deltaTs + _force/_mass * deltaTs;
+}
+
+
 void DynamicObject::UpdateModelMatrix()
 {
 	_modelMatrix = glm::translate(glm::mat4(1), _position);

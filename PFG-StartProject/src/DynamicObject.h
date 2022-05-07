@@ -97,6 +97,8 @@ public:
 	*/
 	const glm::mat4 GetOrientation() const { return _orientation; }
 
+	const glm::vec3 GetVelocity() const { return _velocity; }
+
 	/** A boolean variable to control the start of the simulation This matrix is the camera's lens
 	*/
 	void StartSimulation(bool start) { _start = start; }
@@ -118,7 +120,11 @@ private:
 	*/
 	glm::vec3 _position;
 	/** Velocity of the object
+
 	*/
+
+	glm::vec3 _previousPosition;
+
 	glm::vec3 _velocity;
 	/** The mass of the object
 	*/

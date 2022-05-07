@@ -18,7 +18,6 @@ Scene::Scene()
 
 	glm::vec3 _v_i = glm::vec3(10.0f, 10.5f, 0.0f);
 	// Create a game level object
-	_level = new GameObject();
 
 	// Create the material for the game object- level
 	Material* modelMaterial = new Material();
@@ -35,18 +34,14 @@ Scene::Scene()
 	// Need to tell the material the light's position
 	// If you change the light's position you need to call this again
 	modelMaterial->SetLightPosition(_lightPosition);
-	// Tell the level object to use this material
-	_level->SetMaterial(modelMaterial);
+
 
 	// The mesh is the geometry for the object
 	Mesh* groundMesh = new Mesh();
 	// Load from OBJ file. This must have triangulated geometry
 	groundMesh->LoadOBJ("assets/models/woodfloor.obj");
 	// Tell the game object to use this mesh
-	_level->SetMesh(groundMesh);
-	_level->SetPosition(0.0f, 0.0f, 0.0f);
-	_level->SetRotation(3.141590f, 0.0f, 0.0f);
-	_level->SetType(0);
+
 
 
 	// Create the material for the game object- level
@@ -73,23 +68,31 @@ Scene::Scene()
 	modelMesh->LoadOBJ("assets/models/sphere.obj");
 	// Tell the game object to use this mesh
 
-	for (int i = 0; i < 3; i++)
+	int spheres = 3;
+	int planes = 2;
+
+	for (int i = 0; i < spheres; i++)
 	{
 		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
 
-		_sceneObjects.push_back(newObj);
+		_sceneDynamicObjects.push_back(newObj);
 	}
 
+	for (int i = 0; i < planes; i++)
+	{
+		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 0.0f, 0.0f), glm::vec3(3.141590f, 0.0f, 0.0f));
+
+		_sceneGameObjects.push_back(newObj);
+	}
+
+	// test object
 	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
-	_sceneObjects.push_back(newObj);
+	_sceneDynamicObjects.push_back(newObj);
 }
 
 Scene::~Scene()
 {
 	// You should neatly clean everything up here
-	delete _physics_object;
-	delete _physics_object2;
-	delete _level;
 	delete _camera;
 }
 
@@ -104,42 +107,24 @@ void Scene::Update(float deltaTs, Input* input)
 	}
 	if (_simulation_start == true)
 	{
-		for (int i = 0; i < _sceneObjects.size(); i++)
+		for (int i = 0; i < _sceneDynamicObjects.size(); i++)
 		{
-			_sceneObjects.at(i)->StartSimulation(_simulation_start);
+			_sceneDynamicObjects.at(i)->StartSimulation(_simulation_start);
 		}
 	}
 
-	for (int i = 0; i < _sceneObjects.size(); i++)
+	
+
+	for (int j = 0; j < _sceneDynamicObjects.size(); j++)
 	{
-		/*for (int j = 0; j < _sceneObjects.size; j++)
-		{
-			auto a = _sceneObjects.at(j);
-			auto b = _sceneObjects.at(i);
-
-			if (a == b)
-			{
-				continue;
-			}
-			if (a->GetType() == 0 && b->GetType() == 0)
-
-			{
-				doSphereCollision(a, b);
-			
-			}
-			else if (a->GetType() == 0 && b->GetType() == 1)
-			{
-				doPlaneSphereCollision(a, b);
-			}
-			else if (a->GetType() == 0 && b->GetType() == 1)
-			{
-				doPlaneSphere(b, a);
-			}
-		}*/
-		_sceneObjects.at(i)->Update(_sceneObjects.at(i), deltaTs);
+		_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(j), deltaTs);
 	}
 
-	_level->Update(deltaTs);
+	for (size_t i = 0; i < _sceneGameObjects.size(); i++)
+	{	
+		_sceneGameObjects.at(i)->Update(deltaTs);
+	}
+
 	_camera->Update(input);
 
 	_viewMatrix = _camera->GetView();
@@ -151,12 +136,16 @@ void Scene::Draw()
 {
 	// Draw objects, giving the camera's position and projection
 
-	for (int i = 0; i < _sceneObjects.size(); i++)
+	for (int i = 0; i < _sceneDynamicObjects.size(); i++)
 	{
-		_sceneObjects.at(i)->Draw(_viewMatrix, _projMatrix);
+		_sceneDynamicObjects.at(i)->Draw(_viewMatrix, _projMatrix);
 	}
 
-	_level->Draw(_viewMatrix, _projMatrix);
+	for (int i = 0; i < _sceneGameObjects.size(); i++)
+	{
+		_sceneGameObjects.at(i)->Draw(_viewMatrix, _projMatrix);
+	}
+
 
 }
 
@@ -170,6 +159,18 @@ DynamicObject* Scene::CreateSphere(int objectType, Material* material, Mesh* mod
 	object->SetScale(scale);
 	object->SetMass(mass);
 	object->SetBoundingRadius(boundingRad);
+	object->SetType(objectType);
+
+	return object;
+}
+
+GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation)
+{
+	GameObject* object = new GameObject();
+	object->SetMaterial(material);
+	object->SetMesh(modelMesh);
+	object->SetPosition(position);
+	object->SetRotation(rotation.x, rotation.y, rotation.z);
 	object->SetType(objectType);
 
 	return object;

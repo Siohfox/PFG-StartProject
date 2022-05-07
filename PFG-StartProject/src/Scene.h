@@ -48,18 +48,18 @@ public:
 	*/
 	DynamicObject* CreateSphere(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad);
 
+	/** Create object
+	*
+	*/
+	GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation);
+
 private:
 
-	/** A physics object
-	*/
-	DynamicObject* _physics_object;
-
-	DynamicObject* _physics_object2;
 	/** An example game level in the scene
 
 
 	*/
-	GameObject* _level; 
+
 	/** The main camera in the scene 
 	*/
 	Camera* _camera; 
@@ -77,7 +77,9 @@ private:
 	*/
 	bool _simulation_start;
 
-	std::vector<DynamicObject*> _sceneObjects;
+	std::vector<DynamicObject*> _sceneDynamicObjects;
+
+	std::vector<GameObject*> _sceneGameObjects;
 };
 
 #endif // !_SCENE_H_

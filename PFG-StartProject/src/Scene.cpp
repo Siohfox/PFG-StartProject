@@ -46,6 +46,7 @@ Scene::Scene()
 	_level->SetMesh(groundMesh);
 	_level->SetPosition(0.0f, 0.0f, 0.0f);
 	_level->SetRotation(3.141590f, 0.0f, 0.0f);
+	_level->SetType(0);
 
 
 	// Create the material for the game object- level
@@ -64,8 +65,7 @@ Scene::Scene()
 	// If you change the light's position you need to call this again
 	objectMaterial->SetLightPosition(_lightPosition);
 	// Tell the level object to use this material
-	_physics_object->SetMaterial(objectMaterial);
-	_physics_object2->SetMaterial(objectMaterial);
+
 
 	// Set the geometry for the object
 	Mesh* modelMesh = new Mesh();
@@ -75,10 +75,13 @@ Scene::Scene()
 
 	for (int i = 0; i < 3; i++)
 	{
-		DynamicObject* newObj = CreateSphere(objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
+		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
 
 		_sceneObjects.push_back(newObj);
 	}
+
+	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
+	_sceneObjects.push_back(newObj);
 }
 
 Scene::~Scene()
@@ -109,7 +112,31 @@ void Scene::Update(float deltaTs, Input* input)
 
 	for (int i = 0; i < _sceneObjects.size(); i++)
 	{
-		_sceneObjects.at(i)->Update(deltaTs);
+		/*for (int j = 0; j < _sceneObjects.size; j++)
+		{
+			auto a = _sceneObjects.at(j);
+			auto b = _sceneObjects.at(i);
+
+			if (a == b)
+			{
+				continue;
+			}
+			if (a->GetType() == 0 && b->GetType() == 0)
+
+			{
+				doSphereCollision(a, b);
+			
+			}
+			else if (a->GetType() == 0 && b->GetType() == 1)
+			{
+				doPlaneSphereCollision(a, b);
+			}
+			else if (a->GetType() == 0 && b->GetType() == 1)
+			{
+				doPlaneSphere(b, a);
+			}
+		}*/
+		_sceneObjects.at(i)->Update(_sceneObjects.at(i), deltaTs);
 	}
 
 	_level->Update(deltaTs);
@@ -134,7 +161,7 @@ void Scene::Draw()
 }
 
 
-DynamicObject* Scene::CreateSphere(Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad)
+DynamicObject* Scene::CreateSphere(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad)
 {
 	DynamicObject* object = new DynamicObject();
 	object->SetMaterial(material);
@@ -143,6 +170,7 @@ DynamicObject* Scene::CreateSphere(Material* material, Mesh* modelMesh, glm::vec
 	object->SetScale(scale);
 	object->SetMass(mass);
 	object->SetBoundingRadius(boundingRad);
+	object->SetType(objectType);
 
 	return object;
 }

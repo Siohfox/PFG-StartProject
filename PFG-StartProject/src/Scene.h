@@ -46,7 +46,7 @@ public:
 	/** Create object
 	*
 	*/
-	DynamicObject* CreateSphere(Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad);
+	DynamicObject* CreateSphere(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad);
 
 private:
 

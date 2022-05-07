@@ -30,7 +30,7 @@ public:
 	*   next procedure.
 	*   @param float deltaTs simulation time step length
 	*/
-	virtual void Update(float deltaTs);
+	virtual void Update(GameObject* otherObject, float deltaTs);
 
 	/** Add force that acts on the object to the total force for physics computation
 	*  
@@ -47,6 +47,8 @@ public:
 	 void Midpoint(float deltaTs);
 
 	 void Verlet(float deltaTs);
+
+	 void CollisionResponse(GameObject* otherObject, float deltaTs);
 
 	/** Set force for the object
 	* @param glm::vec3 force a 3D vector for the force acting on the object

@@ -94,7 +94,7 @@ Scene::Scene()
 	}
 
 	// test object
-	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
+	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.2f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
 	_sceneDynamicObjects.push_back(newObj);
 }
 
@@ -127,7 +127,7 @@ void Scene::Update(float deltaTs, Input* input)
 	{
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
-			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs / 3 );
+			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs / 2 );
 		}
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
 		{
@@ -137,7 +137,7 @@ void Scene::Update(float deltaTs, Input* input)
 			}
 			else
 			{
-				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / 9);
+				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / 7);
 			}
 		}
 	}

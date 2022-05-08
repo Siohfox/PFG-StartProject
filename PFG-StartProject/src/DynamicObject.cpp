@@ -78,7 +78,27 @@ void DynamicObject::Verlet(float deltaTs)
 	_velocity += acceleration * deltaTs;
 }
 
+void DynamicObject::RungeKutta2(float deltaTs)
+{
+	glm::vec3 force;
+	glm::vec3 accel;
+	glm::vec3 k0;
+	glm::vec3 k1;
 
+	// Evaluate once at t0
+	force = _force;
+	accel = force / _mass;
+	k0 = deltaTs * accel;
+
+	// Evaluate once at t0 + deltaT/2 using half of k0
+	force = _force + k0 / 2.0f;
+	accel = force / _mass;
+	k1 = deltaTs * accel;
+
+	// Evaluate once at t0 + deltaT using k1
+	_velocity += k1;
+	_position += _velocity * deltaTs;
+}
 
 void DynamicObject::RungeKutta4(float deltaTs)
 {
@@ -116,12 +136,6 @@ void DynamicObject::RungeKutta4(float deltaTs)
 
 void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 {
-	// Stuff I had before
-	float collision_impulse;
-	glm::vec3 floor_normal(0.0f, 1.0f, 0.0f);	
-	glm::vec3 impulse_force;
-	glm::vec3 contact_force(0.0f, _mass * 9.8f * 0.1f, 0.0f);
-
 	// New stuff
 	const float r = GetBoundingRadius();
 	float elasticity = 0.8;
@@ -134,24 +148,24 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 	{
 
 		// Call moving sphere collision detection
-		glm::vec3 n = glm::vec3(0.0f, 1.0f, 0.0f);
-		glm::vec3 c0 = _position;
-		glm::vec3 c1 = _position + _velocity * deltaTs;
-		glm::vec3 q = otherObject->GetPosition(); // This was getvelocity not getinitialvelocity
-		glm::vec3 ci;
+		glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		glm::vec3 centre0 = _position;
+		glm::vec3 centre1 = _position + _velocity * deltaTs;
+		glm::vec3 q = otherObject->GetPosition();
+		glm::vec3 contactPoint;
 
 		// Using DistancetoPlane to detect collision
-		bool collision = PFG::MovingSphereToPlaneCollision(n, c0, c1, q, r, ci);
+		bool collision = PFG::MovingSphereToPlaneCollision(normal, centre0, centre1, q, r, contactPoint);
 
 		// Response to collision if there is one
 		if (collision)
 		{
-			glm::vec3 ColliderVel = otherObject->GetInitialVelocity(); // This was getvelocity not getinitialvelocity
+			glm::vec3 ColliderVel = otherObject->GetInitialVelocity();
 			glm::vec3 relativeVel = _velocity - ColliderVel;
 			glm::vec3 n = glm::vec3(0.0f, 1.0f, 0.0f); // floor normal up
 			float invColliderMass = 0.0f; // floor doesn't move
 
-			glm::vec3 contactPosition = ci;
+			glm::vec3 contactPosition = contactPoint;
 			float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, n);
 			float invMass = 1 / GetMass();
 			float jLin = eCof / (invMass + invColliderMass);
@@ -195,7 +209,9 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 			glm::vec3 collision_impulse_force = jLin * normal / deltaTs;
 
-			glm::vec3 contact_force = glm::vec3(0.0f, 9.81f * _mass, 0.0f);
+			glm::vec3 acceleration = _force / _mass + otherDynamObj->GetMass();
+
+			glm::vec3 contact_force = _force - _mass * acceleration;
 			glm::vec3 total_force = contact_force + collision_impulse_force;
 
 			AddForce(total_force);

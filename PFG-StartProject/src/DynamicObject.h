@@ -2,7 +2,7 @@
 #define _DynamicObject_H_
 
 #include "GameObject.h"
-
+#include <glm/gtc/quaternion.hpp>
 /*! \brief Brief description.
 *  This physics dynamic object class is derived from the GameObject class, as a one type/class of game objects
 *  It sets up parameters for physics computation and calls certain physics algorithms.
@@ -38,6 +38,9 @@ public:
 	*/
 	void AddForce(const glm::vec3 force) { _force += force; }
 	void ClearForces() { _force = glm::vec3(0.0f, 0.0f, 0.0f); }
+	void AddTorque(const glm::vec3 torque) { _torque += torque; }
+	void ClearTorque() { _torque = glm::vec3(0.0f, 0.0f, 0.0f); }
+	void ComputeInverseInertiaTensor();
 	/** Numerical integration function to compute the current velocity and the current position
 	* based on the velocity and the position of the previous time step
 	*   @param float deltaTs simulation time step length
@@ -45,6 +48,8 @@ public:
 	 void Euler(float deltaTs);
 
 	 void Verlet(float deltaTs);
+
+	 void RungeKutta2(float deltaTs);
 
 	 void RungeKutta4(float deltaTs);
 
@@ -140,6 +145,34 @@ private:
 	/** Orientation of the object
 	*/
 	glm::mat4 _orientation;
+
+	glm::vec3 _torque;
+	/** Angular dynamics angular velocity
+	*/
+	glm::vec3 _angular_velocity;
+	/** Angular dynamics angular momentum
+	*/
+	glm::vec3 _angular_momentum;
+	/** Angular dynamics inverse inertia tensor
+	*/
+	glm::mat3 _inertia_tensor_inverse;
+	/** Angular dynamics inverse body inertia tensor
+	*/
+	glm::mat3 _body_inertia_tensor_inverse;
+	/** Angular dynamics rotation matrix
+	*/
+	glm::mat3 _R;
+	/** Quaterion
+	*/
+	glm::quat _rotQuat;
+
+	/**
+	* lerp
+	*/
+	float lerp(float a, float b, float t)
+	{
+		return a + (b - a) * t;
+	}
 
 	/** A boolean variable to control the start of the simulation This matrix is the camera's lens
 	*/

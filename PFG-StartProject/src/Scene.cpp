@@ -88,7 +88,7 @@ Scene::Scene()
 
 	for (int i = 0; i < planes; i++)
 	{
-		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 0.0f, 0.0f), glm::vec3(3.141590f, 0.0f, 0.0f));
+		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 10.0f, 0.0f), glm::vec3(3.141590f, 0.0f, 0.0f));
 
 		_sceneGameObjects.push_back(newObj);
 	}
@@ -125,8 +125,23 @@ void Scene::Update(float deltaTs, Input* input)
 
 	for (int j = 0; j < _sceneDynamicObjects.size(); j++)
 	{
-		_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(j), deltaTs);
+		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
+		{
+			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs / 3 );
+		}
+		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
+		{
+			if (k == j)
+			{
+				continue;
+			}
+			else
+			{
+				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / 9);
+			}
+		}
 	}
+
 
 	for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 	{	

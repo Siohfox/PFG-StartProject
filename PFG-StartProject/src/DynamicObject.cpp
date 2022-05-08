@@ -130,14 +130,14 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 
 	// Sphere to plane
-	if (type == 1)
+	if (type == 0)
 	{
 
 		// Call moving sphere collision detection
 		glm::vec3 n = glm::vec3(0.0f, 1.0f, 0.0f);
 		glm::vec3 c0 = _position;
 		glm::vec3 c1 = _position + _velocity * deltaTs;
-		glm::vec3 q = otherObject->GetInitialVelocity(); // This was getvelocity not getinitialvelocity
+		glm::vec3 q = otherObject->GetPosition(); // This was getvelocity not getinitialvelocity
 		glm::vec3 ci;
 
 		// Using DistancetoPlane to detect collision
@@ -181,6 +181,24 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 		if (collision)
 		{
 			std::cout << "A SPHERE HATH COLLIDETH WITH ANOTHER SPHERE";
+
+			glm::vec3 ColliderVel = otherDynamObj->GetVelocity();
+			glm::vec3 relativeVel = _velocity - ColliderVel;
+			glm::vec3 normal = glm::normalize(centre0 - centre1);
+			
+
+			glm::vec3 contactPosition = radius1 * normal;
+			float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, normal);
+			float invMass = 1 / GetMass();
+			float invColliderMass = 1 / otherDynamObj->GetMass();
+			float jLin = eCof / (invMass + invColliderMass);
+
+			glm::vec3 collision_impulse_force = jLin * normal / deltaTs;
+
+			glm::vec3 contact_force = glm::vec3(0.0f, 9.81f * _mass, 0.0f);
+			glm::vec3 total_force = contact_force + collision_impulse_force;
+
+			AddForce(total_force);
 		}
 	}
 }

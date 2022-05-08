@@ -192,8 +192,8 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 	{
 		DynamicObject* otherDynamObj = dynamic_cast<DynamicObject*>(otherObject);
 
-		glm::vec3 c0 = otherDynamObj->GetPosition() + otherDynamObj->GetVelocity() * deltaTs;
-		glm::vec3 c1 = _position + _velocity * deltaTs;
+		glm::vec3 c0 = otherDynamObj->GetPosition();
+		glm::vec3 c1 = _position;
 		float r1 = GetBoundingRadius();
 		float r2 = otherDynamObj->GetBoundingRadius();
 		glm::vec3 cp;

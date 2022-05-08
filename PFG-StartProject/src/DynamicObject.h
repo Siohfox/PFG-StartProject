@@ -48,6 +48,8 @@ public:
 
 	 void Verlet(float deltaTs);
 
+	 void RungeKutta4(float deltaTs);
+
 	 void CollisionResponse(GameObject* otherObject, float deltaTs);
 
 	/** Set force for the object

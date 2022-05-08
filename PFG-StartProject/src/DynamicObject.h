@@ -44,8 +44,6 @@ public:
 	*/
 	 void Euler(float deltaTs);
 
-	 void Midpoint(float deltaTs);
-
 	 void Verlet(float deltaTs);
 
 	 void RungeKutta4(float deltaTs);

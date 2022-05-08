@@ -149,11 +149,10 @@ void Scene::Draw()
 		_sceneDynamicObjects.at(i)->Draw(_viewMatrix, _projMatrix);
 	}
 
-	for (int i = 0; i < _sceneGameObjects.size(); i++)
+	for each (GameObject* obj in _sceneGameObjects)
 	{
-		_sceneGameObjects.at(i)->Draw(_viewMatrix, _projMatrix);
+		obj->Draw(_viewMatrix, _projMatrix);
 	}
-
 
 }
 

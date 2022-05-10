@@ -16,14 +16,13 @@ DynamicObject::DynamicObject()
 	_angular_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 	_angular_momentum = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	_rotationMatrix = glm::mat3(1.0f, 0.0f, 0.0f,
-				   0.0f, 1.0f, 0.0f,
-				   0.0f, 0.0f, 1.0f);
+	_rotationMatrix = glm::mat3(1.0f);
 
 	_rotQuat = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
 	_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	_start = false;
+	_stopped = false;
 }
 
 DynamicObject::~DynamicObject()
@@ -61,24 +60,23 @@ void DynamicObject::ComputeInverseInertiaTensor()
 void DynamicObject::Update(GameObject* otherObject, float deltaTs)
 {
 
-	if (_start == true)
+	if (_start)
 	{
 
-		// Step 1 clear forces
+		// STEP 1: clear forces
 		ClearForces();
 		ClearTorque();
 
-		// Step 2 Compute forces
+		// STEP 2: Compute forces
 		glm::vec3 gravityForce = glm::vec3(0.0f, -9.8 * _mass * 0.1f, 0.0f);
 		AddForce(gravityForce);
 
-		// Step 3
+		// STEP 3: Find collision response
 		CollisionResponse(otherObject, deltaTs);
 
-		// Step 4 Euler integration
-		Euler(deltaTs);
+		// STEP 4: Calculate next position
+		RungeKutta4(deltaTs);
 	}
-
 
 	UpdateModelMatrix();
 
@@ -190,6 +188,47 @@ void DynamicObject::RungeKutta4(float deltaTs)
 	_velocity += (k0 + 2.0f * k1 + 2.0f * k2 + k3) / 6.0f;
 	//Update position 
 	_position += _velocity * deltaTs;
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ROTATION PHYSICS
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// STEP 1: Compute current angular momentum
+	glm::vec3 tempTorque;
+
+	tempTorque = _torque;
+	k0 = deltaTs * tempTorque;
+
+	tempTorque = _torque + k0 / 2.0f;
+	k1 = deltaTs * tempTorque;
+
+	tempTorque = _torque + k1 / 2.0f;
+	k2 = deltaTs * tempTorque;
+
+	tempTorque = _torque + k2;
+	k3 = deltaTs * tempTorque;
+
+	_angular_momentum += (k0 + 2.0f * k1 + 2.0f, + k2 + k3) / 6.0f;
+
+	if (_stopped == true)
+	{
+		_angular_momentum = glm::vec3(0.0f, 0.0f, 0.0f);
+	}
+
+	// STEP 2: Computer inverse inertia tensor
+	ComputeInverseInertiaTensor();
+
+	// STEP 3: Update angular velocity
+	_angular_velocity = _inertia_tensor_inverse * _angular_momentum;
+
+	// STEP 4: Compute skew matrix omega star
+	glm::mat3 omega_star = glm::mat3(0.0f, -_angular_velocity.z, _angular_velocity.y,
+		_angular_velocity.z, 0.0f, -_angular_velocity.x,
+		-_angular_velocity.y, _angular_velocity.x, 0.0f);
+
+	// Update rotation matrix
+	_rotationMatrix += omega_star * _rotationMatrix * deltaTs;
+
 }
 
 void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
@@ -228,7 +267,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 			float Jlinear = 0.0f;
 			float Jangular = 0.0f;
-			float e = 0.5f;
+			float elasticity = 0.5f;
 			glm::vec3 r1 = _bRadius * glm::vec3(0.0f, 1.0f, 0.0f); // Lever between the COM and point of contact
 
 			float oneOverMass1 = 1.0f / _mass; // 1/m of object 1
@@ -238,10 +277,11 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 			glm::vec3 relativeVelocity = vA - vB;
 			glm::vec3 contactNormal = glm::vec3(0.0f, 1.0f, 0.0f);
 
+			float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, contactNormal);
 			// Jlin = (-(1 + e)*va dot cN) / (1 / m1)+ (1 / m2)
-			Jlinear = (glm::dot(-(1.0f + e) * (relativeVelocity), contactNormal)) / oneOverMass1 + oneOverMass2;
+			Jlinear = eCof / oneOverMass1 + oneOverMass2;
 			// Jang = (-(1 + e)*va dot cN) / (1 / m1) + (1 / m2) + (I * r1 * cN) dot cN
-			Jangular = (glm::dot(-(1.0f - e) * (relativeVelocity), contactNormal)) / (oneOverMass1 + oneOverMass2 + glm::dot(_inertia_tensor_inverse * (r1 * contactNormal), contactNormal));
+			Jangular = eCof / (oneOverMass1 + oneOverMass2 + glm::dot(_inertia_tensor_inverse * (r1 * contactNormal), contactNormal));
 
 			glm::vec3 impulseForce = (Jangular + Jlinear) * contactNormal; // Fi = (Jang + Jlin) * cN
 			glm::vec3 contactForce = -(_force) * contactNormal;
@@ -286,24 +326,13 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 			tempTorque -= _angular_momentum.z * 20.0f; // A damper to slow rotation over time
 
 			AddTorque(tempTorque);
-
-			/*float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, n);
-			float invMass = 1 / GetMass();
-			float jLin = eCof / (invMass + invColliderMass);
-
-			glm::vec3 collision_impulse_force = jLin * n / deltaTs;
-
-			glm::vec3 contact_force = -(_force) * normal;
-
-			glm::vec3 total_force = contact_force + collision_impulse_force;
-
-			AddForce(total_force);*/
 		}
 	}
 
 	// Sphere to sphere
 	if (type == 1)
 	{
+		// Cast gameobject into dynamic so we can use sphere to sphere functions
 		DynamicObject* otherDynamObj = dynamic_cast<DynamicObject*>(otherObject);
 
 		glm::vec3 centre0 = otherDynamObj->GetPosition();
@@ -344,15 +373,15 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 void DynamicObject::UpdateModelMatrix()
 {
-	glm::mat4 model_rotation = glm::mat4(_rotationMatrix);
+	glm::mat4 modelRotation = glm::mat4(_rotationMatrix);
 
-	glm::quat rotation = glm::normalize(glm::quat_cast(model_rotation));
+	glm::quat rotation = glm::normalize(glm::quat_cast(modelRotation));
 
 	_rotationMatrix = glm::mat3_cast(rotation);
 
 	_modelMatrix = glm::translate(glm::mat4(1), _position);
 	_modelMatrix = glm::scale(_modelMatrix, _scale);
-	_modelMatrix = _modelMatrix, glm::mat4_cast(rotation);
+	_modelMatrix = _modelMatrix * glm::mat4_cast(rotation);
 	_invModelMatrix = glm::inverse(_modelMatrix);
 
 }

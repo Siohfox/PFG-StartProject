@@ -60,7 +60,7 @@ public:
 	*/
 	void SetForce(const glm::vec3 force) { _force = force; }
 	/** Set mass for the object
-	* @param float mass a 3D vector for the mass of the object
+	* @param float mass a float for the mass of the object
 	*/
 	void SetMass(float mass) { _mass = mass; }
 	/** Set a sphere bounding volume for the object

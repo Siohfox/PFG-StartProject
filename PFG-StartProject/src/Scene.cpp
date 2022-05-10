@@ -135,9 +135,9 @@ void Scene::Update(float deltaTs, Input* input)
 
 	for (int j = 0; j < _sceneDynamicObjects.size(); j++)
 	{
+		// For each game object that exists, pass it into 
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
-
 			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  3);
 		}
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)

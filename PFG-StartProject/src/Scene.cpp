@@ -77,7 +77,7 @@ Scene::Scene()
 	// Tell the game object to use this mesh
 
 	int spheres = 3;
-	int planes = 2;
+	int planes = 1;
 
 	for (int i = 0; i < spheres; i++)
 	{
@@ -88,7 +88,7 @@ Scene::Scene()
 
 	for (int i = 0; i < planes; i++)
 	{
-		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 10.0f, 0.0f), glm::vec3(3.141590f, 0.0f, 0.0f));
+		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f));
 
 		_sceneGameObjects.push_back(newObj);
 	}
@@ -102,6 +102,16 @@ Scene::~Scene()
 {
 	// You should neatly clean everything up here
 	delete _camera;
+
+	for (size_t i = 0; i < _sceneDynamicObjects.size(); i++)
+	{
+		delete _sceneDynamicObjects.at(i);
+	}
+
+	for (size_t i = 0; i < _sceneGameObjects.size(); i++)
+	{
+		delete _sceneGameObjects.at(i);
+	}
 }
 
 void Scene::Update(float deltaTs, Input* input)
@@ -127,7 +137,8 @@ void Scene::Update(float deltaTs, Input* input)
 	{
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
-			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs / 2 );
+
+			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  3);
 		}
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
 		{
@@ -186,7 +197,7 @@ DynamicObject* Scene::CreateSphere(int objectType, Material* material, Mesh* mod
 	return object;
 }
 
-GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation)
+GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 {
 	GameObject* object = new GameObject();
 	object->SetMaterial(material);
@@ -194,6 +205,7 @@ GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMe
 	object->SetPosition(position);
 	object->SetRotation(rotation.x, rotation.y, rotation.z);
 	object->SetType(objectType);
+	object->SetScale(scale.x, scale.y, scale.z);
 
 	return object;
 }

@@ -106,7 +106,7 @@ public:
 
 	/** A boolean variable to control the start of the simulation This matrix is the camera's lens
 	*/
-	void StartSimulation(bool start) { _start = start; }
+	void StartSimulation(bool start);
 
 private:
 

@@ -55,7 +55,7 @@ public:
 	/** Create object
 	*
 	*/
-	GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation);
+	GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 
 private:
 

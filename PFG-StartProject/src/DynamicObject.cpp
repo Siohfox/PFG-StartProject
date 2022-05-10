@@ -12,6 +12,16 @@ DynamicObject::DynamicObject()
 	_bRadius = 0.0f;
 	_mass = 1.0f;
 
+	_torque = glm::vec3(0.0f, 0.0f, 0.0f);
+	_angular_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	_angular_momentum = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	_R = glm::mat3(1.0f, 0.0f, 0.0f,
+				   0.0f, 1.0f, 0.0f,
+				   0.0f, 0.0f, 1.0f);
+
+	_rotQuat = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
 	_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	_start = false;
 }
@@ -21,20 +31,42 @@ DynamicObject::~DynamicObject()
 
 }
 
+void DynamicObject::StartSimulation(bool start)
+{
+	_start = start;
+
+	_rotQuat = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+
+	glm::mat3 body_inertia;
+
+	body_inertia = glm::mat3
+	{
+		(2.0f / 5.0f) * _mass * std::pow(_bRadius, 2),0,0,
+		0, (2.0f / 5.0f) * _mass * std::pow(_bRadius, 2),0,
+		0,0, (2.0f / 5.0f) * _mass * std::pow(_bRadius, 2)
+	};
+
+	_body_inertia_tensor_inverse = glm::inverse(body_inertia);
+
+	ComputeInverseInertiaTensor();
+
+	_angular_velocity = _inertia_tensor_inverse * _angular_momentum;
+}
+
+void DynamicObject::ComputeInverseInertiaTensor()
+{
+	_inertia_tensor_inverse = _R * _body_inertia_tensor_inverse * glm::transpose(_R);
+}
+
 void DynamicObject::Update(GameObject* otherObject, float deltaTs)
 {
-	float collision_impulse;
-	glm::vec3 floor_normal(0.0f, 1.0f, 0.0f);
-	float elasticity = 0.5;
-	glm::vec3 impulse_force;
-	glm::vec3 contact_force(0.0f, _mass * 9.8f * 0.1f, 0.0f);
-	float r = GetBoundingRadius();
 
 	if (_start == true)
 	{
 
 		// Step 1 clear forces
 		ClearForces();
+		ClearTorque();
 
 		// Step 2 Compute forces
 		glm::vec3 gravityForce = glm::vec3(0.0f, -9.8 * _mass * 0.1f, 0.0f);
@@ -44,7 +76,7 @@ void DynamicObject::Update(GameObject* otherObject, float deltaTs)
 		CollisionResponse(otherObject, deltaTs);
 
 		// Step 4 Euler integration
-		Verlet(deltaTs);
+		Euler(deltaTs);
 	}
 
 
@@ -165,17 +197,19 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 			glm::vec3 n = glm::vec3(0.0f, 1.0f, 0.0f); // floor normal up
 			float invColliderMass = 0.0f; // floor doesn't move
 
-			glm::vec3 contactPosition = contactPoint;
+			_position = contactPoint;
 			float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, n);
 			float invMass = 1 / GetMass();
 			float jLin = eCof / (invMass + invColliderMass);
 
 			glm::vec3 collision_impulse_force = jLin * n / deltaTs;
 
-			glm::vec3 contact_force = glm::vec3(0.0f, 9.81f * _mass, 0.0f);
+			glm::vec3 contact_force = -(_force) * normal;
+
 			glm::vec3 total_force = contact_force + collision_impulse_force;
 
 			AddForce(total_force);
+			//_velocity += (collision_impulse_force / _mass);
 		}
 	}
 

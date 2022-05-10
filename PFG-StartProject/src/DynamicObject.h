@@ -161,7 +161,7 @@ private:
 	glm::mat3 _body_inertia_tensor_inverse;
 	/** Angular dynamics rotation matrix
 	*/
-	glm::mat3 _R;
+	glm::mat3 _rotationMatrix;
 	/** Quaterion
 	*/
 	glm::quat _rotQuat;
@@ -173,6 +173,10 @@ private:
 	{
 		return a + (b - a) * t;
 	}
+
+	/** A boolean variable to see if the object has stopped moving
+	*/
+	bool _stopped;
 
 	/** A boolean variable to control the start of the simulation This matrix is the camera's lens
 	*/

@@ -16,7 +16,7 @@ DynamicObject::DynamicObject()
 	_angular_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 	_angular_momentum = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	_R = glm::mat3(1.0f, 0.0f, 0.0f,
+	_rotationMatrix = glm::mat3(1.0f, 0.0f, 0.0f,
 				   0.0f, 1.0f, 0.0f,
 				   0.0f, 0.0f, 1.0f);
 
@@ -55,7 +55,7 @@ void DynamicObject::StartSimulation(bool start)
 
 void DynamicObject::ComputeInverseInertiaTensor()
 {
-	_inertia_tensor_inverse = _R * _body_inertia_tensor_inverse * glm::transpose(_R);
+	_inertia_tensor_inverse = _rotationMatrix * _body_inertia_tensor_inverse * glm::transpose(_rotationMatrix);
 }
 
 void DynamicObject::Update(GameObject* otherObject, float deltaTs)
@@ -88,10 +88,36 @@ void DynamicObject::Euler(float deltaTs)
 {
 	float oneOverMass = 1 / _mass;
 
-	_velocity += (_force * oneOverMass) * deltaTs;
+	_velocity += (_force * oneOverMass) * deltaTs; // Velocity is calced based on previous velocity
 
-	_position += _velocity * deltaTs;
+	_position += _velocity * deltaTs; // Current position is calced based on previous position
 
+	if (_stopped == true)
+	{
+		_velocity.x = 0.0f;
+		_velocity.z = 0.0f;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ROTATION PHYSICS
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// STEP 1: Compute current angular momentum
+	_angular_momentum += _torque * deltaTs;
+
+	// STEP 2: Computer inverse inertia tensor
+	ComputeInverseInertiaTensor();
+
+	// STEP 3: Update angular velocity
+	_angular_velocity = _inertia_tensor_inverse * _angular_momentum;
+
+	// STEP 4: Compute skew matrix omega star
+	glm::mat3 omega_star = glm::mat3(0.0f, -_angular_velocity.z, _angular_velocity.y,
+									_angular_velocity.z, 0.0f, -_angular_velocity.x,
+									-_angular_velocity.y, _angular_velocity.x, 0.0f);
+
+	// Update rotation matrix
+	_rotationMatrix += omega_star * _rotationMatrix * deltaTs;
 }
 
 
@@ -172,13 +198,11 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 	const float r = GetBoundingRadius();
 	float elasticity = 0.8;
 	int type = otherObject->GetType();
-
-
+	_stopped = false;
 
 	// Sphere to plane
 	if (type == 0)
 	{
-
 		// Call moving sphere collision detection
 		glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
 		glm::vec3 centre0 = _position;
@@ -192,13 +216,78 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 		// Response to collision if there is one
 		if (collision)
 		{
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// COLLISION RESPONSE
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			glm::vec3 ColliderVel = otherObject->GetInitialVelocity();
 			glm::vec3 relativeVel = _velocity - ColliderVel;
 			glm::vec3 n = glm::vec3(0.0f, 1.0f, 0.0f); // floor normal up
 			float invColliderMass = 0.0f; // floor doesn't move
 
 			_position = contactPoint;
-			float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, n);
+
+			float Jlinear = 0.0f;
+			float Jangular = 0.0f;
+			float e = 0.5f;
+			glm::vec3 r1 = _bRadius * glm::vec3(0.0f, 1.0f, 0.0f); // Lever between the COM and point of contact
+
+			float oneOverMass1 = 1.0f / _mass; // 1/m of object 1
+			float oneOverMass2 = 0.0f;		   // 1/m of object 2
+			glm::vec3 vA = _velocity;		   // Velocity of object 1
+			glm::vec3 vB = glm::vec3(0.0f, 0.0f, 0.0f);
+			glm::vec3 relativeVelocity = vA - vB;
+			glm::vec3 contactNormal = glm::vec3(0.0f, 1.0f, 0.0f);
+
+			// Jlin = (-(1 + e)*va dot cN) / (1 / m1)+ (1 / m2)
+			Jlinear = (glm::dot(-(1.0f + e) * (relativeVelocity), contactNormal)) / oneOverMass1 + oneOverMass2;
+			// Jang = (-(1 + e)*va dot cN) / (1 / m1) + (1 / m2) + (I * r1 * cN) dot cN
+			Jangular = (glm::dot(-(1.0f - e) * (relativeVelocity), contactNormal)) / (oneOverMass1 + oneOverMass2 + glm::dot(_inertia_tensor_inverse * (r1 * contactNormal), contactNormal));
+
+			glm::vec3 impulseForce = (Jangular + Jlinear) * contactNormal; // Fi = (Jang + Jlin) * cN
+			glm::vec3 contactForce = -(_force) * contactNormal;
+
+			AddForce(impulseForce + contactForce);
+			_velocity += (impulseForce / _mass); // Adding the impulse onto the velocity
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// FRICTION
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			glm::vec3 forwardRelativeVelocity = relativeVelocity - glm::dot(relativeVelocity, contactNormal) * contactNormal; // Finding relative velocity perpendicular to the contact normal
+
+			glm::vec3 forwardRelativeDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+			if (forwardRelativeVelocity != glm::vec3(0.0f, 0.0f, 0.0f))
+			{
+				forwardRelativeDirection = glm::normalize(forwardRelativeVelocity); // gets a normalized vector of the direction travelled perpendicular to the contact normal
+			}
+
+			float mu = 0.5f;
+			glm::vec3 frictionDirection = forwardRelativeDirection * -1.0f; // friction direction acts in opposite direction of direction travel
+			glm::vec3 frictonForce = frictionDirection * mu * glm::length(contactForce);
+
+			if (glm::length(forwardRelativeVelocity) - ((glm::length(frictonForce) / _mass) * deltaTs) > 0.0f) // Checks to see if friction force would reverse the direction of travel
+			{
+				AddForce(frictonForce); // Add friction
+			}
+			else
+			{
+				frictonForce = forwardRelativeVelocity * -1.0f; // Adds enough friction to stop the object
+				AddForce(frictonForce);
+				_stopped = true;
+			}
+
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			// TORQUE
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+			glm::vec3 tempTorque = (glm::cross(r1, contactForce)) + (glm::cross(r1, frictonForce)); // Computes torque
+
+			tempTorque.x -= _angular_momentum.x * 20.0f;
+			tempTorque -= _angular_momentum.z * 20.0f; // A damper to slow rotation over time
+
+			AddTorque(tempTorque);
+
+			/*float eCof = -(1.0f + elasticity) * glm::dot(relativeVel, n);
 			float invMass = 1 / GetMass();
 			float jLin = eCof / (invMass + invColliderMass);
 
@@ -208,8 +297,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 			glm::vec3 total_force = contact_force + collision_impulse_force;
 
-			AddForce(total_force);
-			//_velocity += (collision_impulse_force / _mass);
+			AddForce(total_force);*/
 		}
 	}
 
@@ -228,7 +316,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 		if (collision)
 		{
-			std::cout << "A SPHERE HATH COLLIDETH WITH ANOTHER SPHERE";
+			//std::cout << "A SPHERE HATH COLLIDETH WITH ANOTHER SPHERE";
 
 			glm::vec3 ColliderVel = otherDynamObj->GetVelocity();
 			glm::vec3 relativeVel = _velocity - ColliderVel;
@@ -256,7 +344,15 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 void DynamicObject::UpdateModelMatrix()
 {
+	glm::mat4 model_rotation = glm::mat4(_rotationMatrix);
+
+	glm::quat rotation = glm::normalize(glm::quat_cast(model_rotation));
+
+	_rotationMatrix = glm::mat3_cast(rotation);
+
 	_modelMatrix = glm::translate(glm::mat4(1), _position);
 	_modelMatrix = glm::scale(_modelMatrix, _scale);
+	_modelMatrix = _modelMatrix, glm::mat4_cast(rotation);
 	_invModelMatrix = glm::inverse(_modelMatrix);
+
 }

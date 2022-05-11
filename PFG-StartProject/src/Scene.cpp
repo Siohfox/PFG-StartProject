@@ -14,74 +14,44 @@ Scene::Scene()
 		std::cout << "File content includes: " << _fileCode.at(i) << "\n";
 	}
 	
-
-	// Set up your scene here......
 	// Set a camera
 	_camera = new Camera();
+
 	// Don't start simulation yet
 	_simulation_start = false;
 
 	// Position of the light, in world-space
 	_lightPosition = glm::vec3(10, 10, 0);
 
-	glm::vec3 _v_i = glm::vec3(10.0f, 10.5f, 0.0f);
-	// Create a game level object
-
-	// Create the material for the game object- level
+	// Create the material for the planes
 	Material* modelMaterial = new Material();
-	// Shaders are now in files
 	modelMaterial->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
-	// You can set some simple material properties, these values are passed to the shader
-	// This colour modulates the texture colour
 	modelMaterial->SetDiffuseColour(glm::vec3(0.8, 0.8, 0.8));
-	// The material currently supports one texture
-	// This is multiplied by all the light components (ambient, diffuse, specular)
-	// Note that the diffuse colour set with the line above will be multiplied by the texture colour
-	// If you want just the texture colour, use modelMaterial->SetDiffuseColour( glm::vec3(1,1,1) );
 	modelMaterial->SetTexture("assets/textures/diffuse.bmp");
-	// Need to tell the material the light's position
-	// If you change the light's position you need to call this again
 	modelMaterial->SetLightPosition(_lightPosition);
 
-
-	// The mesh is the geometry for the object
+	// Load Mesh of planes
 	Mesh* groundMesh = new Mesh();
-	// Load from OBJ file. This must have triangulated geometry
 	groundMesh->LoadOBJ("assets/models/woodfloor.obj");
-	// Tell the game object to use this mesh
 
-
-
-	// Create the material for the game object- level
+	// Create the material for the spheres
 	Material* objectMaterial = new Material();
-	// Shaders are now in files
 	objectMaterial->LoadShaders("assets/shaders/VertShader.txt", "assets/shaders/FragShader.txt");
-	// You can set some simple material properties, these values are passed to the shader
-	// This colour modulates the texture colour
 	objectMaterial->SetDiffuseColour(glm::vec3(0.8, 0.1, 0.1));
-	// The material currently supports one texture
-	// This is multiplied by all the light components (ambient, diffuse, specular)
-	// Note that the diffuse colour set with the line above will be multiplied by the texture colour
-	// If you want just the texture colour, use modelMaterial->SetDiffuseColour( glm::vec3(1,1,1) );
 	objectMaterial->SetTexture("assets/textures/default.bmp");
-	// Need to tell the material the light's position
-	// If you change the light's position you need to call this again
 	objectMaterial->SetLightPosition(_lightPosition);
-	// Tell the level object to use this material
 
-
-	// Set the geometry for the object
+	// Load Mesh of spheres
 	Mesh* modelMesh = new Mesh();
-	// Load from OBJ file. This must have triangulated geometry
 	modelMesh->LoadOBJ("assets/models/sphere.obj");
-	// Tell the game object to use this mesh
 
-	int spheres = 3;
+	// Initialise the amount of objects that will be loaded (read in via file)
+	int spheres = std::stoi(_fileCode.at(0));
 	int planes = 1;
 
 	for (int i = 0; i < spheres; i++)
 	{
-		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(std::stof(_fileCode.at(1)), std::stof(_fileCode.at(1)), std::stof(_fileCode.at(1))), std::stof(_fileCode.at(0)) , std::stof(_fileCode.at(1)));
+		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2))), std::stof(_fileCode.at(1)) , std::stof(_fileCode.at(2)));
 
 		_sceneDynamicObjects.push_back(newObj);
 	}
@@ -142,7 +112,6 @@ void Scene::Update(float deltaTs, Input* input)
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
 			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  3);
-			//_sceneDynamicObjects.at(j)->CollisionCheck(_sceneGameObjects.at(i));
 		}
 
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)

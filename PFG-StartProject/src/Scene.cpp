@@ -81,7 +81,7 @@ Scene::Scene()
 
 	for (int i = 0; i < spheres; i++)
 	{
-		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), std::stof(_fileCode.at(0)) , std::stof(_fileCode.at(1)));
+		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(std::stof(_fileCode.at(1)), std::stof(_fileCode.at(1)), std::stof(_fileCode.at(1))), std::stof(_fileCode.at(0)) , std::stof(_fileCode.at(1)));
 
 		_sceneDynamicObjects.push_back(newObj);
 	}
@@ -131,7 +131,10 @@ void Scene::Update(float deltaTs, Input* input)
 		}
 	}
 
-	
+	for (size_t i = 0; i < _sceneGameObjects.size(); i++)
+	{
+		_sceneGameObjects.at(i)->Update(deltaTs);
+	}
 
 	for (int j = 0; j < _sceneDynamicObjects.size(); j++)
 	{
@@ -139,7 +142,9 @@ void Scene::Update(float deltaTs, Input* input)
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
 			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  3);
+			//_sceneDynamicObjects.at(j)->CollisionCheck(_sceneGameObjects.at(i));
 		}
+
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
 		{
 			if (k == j)
@@ -154,10 +159,7 @@ void Scene::Update(float deltaTs, Input* input)
 	}
 
 
-	for (size_t i = 0; i < _sceneGameObjects.size(); i++)
-	{	
-		_sceneGameObjects.at(i)->Update(deltaTs);
-	}
+	
 
 	_camera->Update(input);
 
@@ -213,15 +215,12 @@ GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMe
 void Scene::getFileCode(std::string fileName)
 {
 	std::string line;
-	std::string fileContent;
 	std::ifstream myfile(fileName);
 	if (myfile.is_open())
 	{
 		while (getline(myfile, line))
 		{
 			std::cout << line << '\n';
-
-			fileContent += line + "\n";
 
 			_fileCode.push_back(line);
 		}

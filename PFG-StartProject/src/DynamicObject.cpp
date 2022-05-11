@@ -62,7 +62,6 @@ void DynamicObject::Update(GameObject* otherObject, float deltaTs)
 
 	if (_start)
 	{
-
 		// STEP 1: clear forces
 		ClearForces();
 		ClearTorque();
@@ -235,7 +234,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 {
 	// New stuff
 	const float r = GetBoundingRadius();
-	float elasticity = 0.8;
+	const float elasticity = 0.5;
 	int type = otherObject->GetType();
 	_stopped = false;
 
@@ -265,6 +264,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 			_position = contactPoint;
 
+			// Zero out the 
 			float Jlinear = 0.0f;
 			float Jangular = 0.0f;
 			float elasticity = 0.5f;

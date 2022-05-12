@@ -73,7 +73,7 @@ void DynamicObject::Update(GameObject* otherObject, float deltaTs)
 		// STEP 3: Find collision response
 		CollisionResponse(otherObject, deltaTs);
 
-		// STEP 4: Calculate next position
+		// STEP 4: Calculate next position using differential equation
 		RungeKutta4(deltaTs);
 	}
 

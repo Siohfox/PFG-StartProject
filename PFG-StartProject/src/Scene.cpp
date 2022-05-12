@@ -49,13 +49,14 @@ Scene::Scene()
 	int spheres = std::stoi(_fileCode.at(0));
 	int planes = 1;
 
+	// For loop to spawn amount of spheres
 	for (int i = 0; i < spheres; i++)
 	{
-		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2))), std::stof(_fileCode.at(1)) , std::stof(_fileCode.at(2)));
+		DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.0f + i, 20.0f, 0.0f), glm::vec3(std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2)), std::stof(_fileCode.at(2))), std::stof(_fileCode.at(1)), std::stof(_fileCode.at(2)));
 
 		_sceneDynamicObjects.push_back(newObj);
 	}
-
+	// For loop to spawn amount of planes
 	for (int i = 0; i < planes; i++)
 	{
 		GameObject* newObj = CreatePlane(0, modelMaterial, groundMesh, glm::vec3(0.0f + i * 10, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 2.0f, 2.0f));
@@ -63,7 +64,7 @@ Scene::Scene()
 		_sceneGameObjects.push_back(newObj);
 	}
 
-	// test object to spawn above the others
+	// test object to spawn above the others to simulate a ball dropping on another
 	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.2f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
 	_sceneDynamicObjects.push_back(newObj);
 }
@@ -108,12 +109,13 @@ void Scene::Update(float deltaTs, Input* input)
 
 	for (int j = 0; j < _sceneDynamicObjects.size(); j++)
 	{
-		// For each game object that exists, pass it into 
+		// For each game object that exists, pass it into the dyanmic object's update for collision
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
 			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  _sceneGameObjects.size());
 		}
 
+		// For each dynamic object that exists, pass it into the dyanmic object's update for collision, minus if it's itself
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
 		{
 			if (k == j)
@@ -122,16 +124,15 @@ void Scene::Update(float deltaTs, Input* input)
 			}
 			else
 			{
-				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / (_sceneDynamicObjects.size() * 2));
+				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / (_sceneDynamicObjects.size() * 3));
 			}
 		}
 	}
 
-
-	
-
+	// Update camera
 	_camera->Update(input);
 
+	// Update matrices
 	_viewMatrix = _camera->GetView();
 	_projMatrix = _camera->GetProj();
 														
@@ -154,6 +155,7 @@ void Scene::Draw()
 }
 
 
+// Create a dynamic object with parameters
 DynamicObject* Scene::CreateSphere(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 scale, float mass, float boundingRad)
 {
 	DynamicObject* object = new DynamicObject();
@@ -168,6 +170,7 @@ DynamicObject* Scene::CreateSphere(int objectType, Material* material, Mesh* mod
 	return object;
 }
 
+// Create a dynamic object with parameters
 GameObject* Scene::CreatePlane(int objectType, Material* material, Mesh* modelMesh, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
 {
 	GameObject* object = new GameObject();

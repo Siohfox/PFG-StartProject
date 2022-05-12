@@ -63,7 +63,7 @@ Scene::Scene()
 		_sceneGameObjects.push_back(newObj);
 	}
 
-	// test object
+	// test object to spawn above the others
 	DynamicObject* newObj = CreateSphere(1, objectMaterial, modelMesh, glm::vec3(0.2f, 25.0f, 0.0f), glm::vec3(0.3f, 0.3f, 0.3f), 2.0f, 0.3f);
 	_sceneDynamicObjects.push_back(newObj);
 }
@@ -111,7 +111,7 @@ void Scene::Update(float deltaTs, Input* input)
 		// For each game object that exists, pass it into 
 		for (size_t i = 0; i < _sceneGameObjects.size(); i++)
 		{
-			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  3);
+			_sceneDynamicObjects.at(j)->Update(_sceneGameObjects.at(i), deltaTs /  _sceneGameObjects.size());
 		}
 
 		for (size_t k = 0; k < _sceneDynamicObjects.size(); k++)
@@ -122,7 +122,7 @@ void Scene::Update(float deltaTs, Input* input)
 			}
 			else
 			{
-				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / 7);
+				_sceneDynamicObjects.at(j)->Update(_sceneDynamicObjects.at(k), deltaTs / (_sceneDynamicObjects.size() * 2));
 			}
 		}
 	}

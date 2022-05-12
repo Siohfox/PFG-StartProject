@@ -345,8 +345,6 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 
 		if (collision)
 		{
-			//std::cout << "A SPHERE HATH COLLIDETH WITH ANOTHER SPHERE";
-
 			glm::vec3 ColliderVel = otherDynamObj->GetVelocity();
 			glm::vec3 relativeVel = _velocity - ColliderVel;
 			glm::vec3 normal = glm::normalize(centre0 - centre1);
@@ -366,6 +364,7 @@ void DynamicObject::CollisionResponse(GameObject* otherObject, float deltaTs)
 			glm::vec3 total_force = contact_force + collision_impulse_force;
 
 			AddForce(total_force);
+			otherDynamObj->AddForce(-collision_impulse_force);
 		}
 	}
 }
